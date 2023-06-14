@@ -1,7 +1,6 @@
 package com.kezong.fataar
 
 import com.android.build.gradle.api.LibraryVariant
-import com.android.build.gradle.internal.api.DefaultAndroidSourceSet
 import com.android.build.gradle.tasks.ManifestProcessorTask
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -51,7 +50,9 @@ class VariantProcessor {
         mAndroidArchiveLibrariesProperty = mProject.objects.listProperty(AndroidArchiveLibrary.class)
         variantPackagesProperty.put(mVariant.getName(),
                 mAndroidArchiveLibrariesProperty.map(it ->
-                        it.stream().map(it2 -> it2.getPackageName()).collect(Collectors.toList())))
+                        it.stream()
+                                .filter { it.getPackageName() != null }
+                                .map(it2 -> it2.getPackageName()).collect(Collectors.toList())))
     }
 
     void addAndroidArchiveLibrary(AndroidArchiveLibrary library) {

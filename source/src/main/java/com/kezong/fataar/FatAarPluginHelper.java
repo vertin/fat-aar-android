@@ -39,6 +39,7 @@ public class FatAarPluginHelper {
                     InstrumentationScope.PROJECT,
                     params -> {
                         params.getNamespace().set(variant.getNamespace());
+                        if(variantPackagesProperty.getting(variant.getName()).isPresent())
                         params.getLibraryNamespaces().set(variantPackagesProperty.getting(variant.getName()));
                         return Unit.INSTANCE;
                     });
