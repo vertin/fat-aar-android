@@ -45,6 +45,7 @@ import kotlin.io.FilesKt;
  * <p>
  * rename com.lib1.R and com.lib2.R to com.sdk.R
  */
+@Deprecated
 public class RClassesTransform extends Transform {
 
     private static final int CPU_COUNT = Runtime.getRuntime().availableProcessors();
