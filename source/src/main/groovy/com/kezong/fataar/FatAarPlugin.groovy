@@ -1,13 +1,17 @@
 package com.kezong.fataar
 
+import com.android.build.api.instrumentation.InstrumentationScope
+import com.android.build.api.variant.AndroidComponentsExtension
 import com.android.build.gradle.api.LibraryVariant
+import kotlin.Unit
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.ProjectConfigurationException
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ResolvedArtifact
 import org.gradle.api.artifacts.ResolvedDependency
-import org.gradle.api.provider.MapProperty
+
+import static com.android.build.api.instrumentation.FramesComputationMode.COPY_FRAMES
 
 /**
  * plugin entry
@@ -28,7 +32,6 @@ class FatAarPlugin implements Plugin<Project> {
 
     private final Collection<Configuration> embedConfigurations = new ArrayList<>()
 
-    private MapProperty<String, List<String>> variantPackagesProperty;
 
     @Override
     void apply(Project project) {
@@ -38,21 +41,38 @@ class FatAarPlugin implements Plugin<Project> {
         DirectoryManager.attach(project)
         project.extensions.create(FatAarExtension.NAME, FatAarExtension)
         createConfigurations()
-        registerTransform()
+        registerTransform(project)
         project.afterEvaluate {
             doAfterEvaluate()
         }
     }
 
-    private registerTransform() {
-        variantPackagesProperty = project.objects.mapProperty(String.class, List.class)
+    private registerTransform(Project project) {
         if (FatUtils.compareVersion(VersionAdapter.AGPVersion, "8.0.0") >= 0) {
-            FatAarPluginHelper.registerAsmTransformation(project, variantPackagesProperty)
+            registerTransformV8(project)
         } else {
             transform = new RClassesTransform(project)
             // register in project.afterEvaluate is invalid.
             project.android.registerTransform(transform)
         }
+    }
+
+    private void registerTransformV8(Project project) {
+        def components =
+                project.getExtensions().getByType(AndroidComponentsExtension.class);
+
+        components.onVariants(components.selector().all(), variant -> {
+            variant.getInstrumentation().transformClassesWith(
+                    FatAarPluginHelper.RClassAsmTransformerFactory.class,
+                    InstrumentationScope.PROJECT,
+                    params -> {
+                        project.fataar.libraryNamespaces
+                        params.getNamespace().set(variant.namespace)
+                        params.getLibraryNamespaces().set(project.fataar.libraryNamespaces)
+                        return Unit.INSTANCE;
+                    });
+            variant.getInstrumentation().setAsmFramesComputationMode(COPY_FRAMES);
+        });
     }
 
     private void doAfterEvaluate() {
@@ -78,7 +98,7 @@ class FatAarPlugin implements Plugin<Project> {
             }
 
             if (!artifacts.isEmpty()) {
-                def processor = new VariantProcessor(project, variant, variantPackagesProperty)
+                def processor = new VariantProcessor(project, variant)
                 processor.processVariant(artifacts, firstLevelDependencies, transform)
             }
         }

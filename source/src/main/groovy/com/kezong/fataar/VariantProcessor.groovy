@@ -8,18 +8,14 @@ import org.gradle.api.artifacts.ResolvedArtifact
 import org.gradle.api.artifacts.ResolvedDependency
 import org.gradle.api.internal.artifacts.ResolvableDependency
 import org.gradle.api.internal.tasks.CachingTaskDependencyResolveContext
-import org.gradle.api.provider.ListProperty
-import org.gradle.api.provider.MapProperty
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskDependency
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.bundling.Zip
-
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.stream.Collectors
 
 /**
  * Core
@@ -33,7 +29,7 @@ class VariantProcessor {
 
     private Collection<AndroidArchiveLibrary> mAndroidArchiveLibraries = new ArrayList<>()
 
-    private ListProperty<AndroidArchiveLibrary> mAndroidArchiveLibrariesProperty
+    //private ListProperty<AndroidArchiveLibrary> mAndroidArchiveLibrariesProperty
 
     private Collection<File> mJarFiles = new ArrayList<>()
 
@@ -43,21 +39,16 @@ class VariantProcessor {
 
     private TaskProvider mMergeClassTask
 
-    VariantProcessor(Project project, LibraryVariant variant, MapProperty<String, List<String>> variantPackagesProperty) {
+    VariantProcessor(Project project, LibraryVariant variant) {
         mProject = project
         mVariant = variant
         mVersionAdapter = new VersionAdapter(project, variant)
-        mAndroidArchiveLibrariesProperty = mProject.objects.listProperty(AndroidArchiveLibrary.class)
-        variantPackagesProperty.put(mVariant.getName(),
-                mAndroidArchiveLibrariesProperty.map(it ->
-                        it.stream()
-                                .filter { it.getPackageName() != null }
-                                .map(it2 -> it2.getPackageName()).collect(Collectors.toList())))
+       // mAndroidArchiveLibrariesProperty = mProject.objects.listProperty(AndroidArchiveLibrary.class)
     }
 
     void addAndroidArchiveLibrary(AndroidArchiveLibrary library) {
         mAndroidArchiveLibraries.add(library)
-        mAndroidArchiveLibrariesProperty.add(library)
+       // mAndroidArchiveLibrariesProperty.add(library)
     }
 
     void addJarFile(File jar) {
